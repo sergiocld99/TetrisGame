@@ -17,10 +17,22 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-right: 100px;
+    margin: 0 100px;
+    height: 60vh;
+}
+
+.score-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 100px;
     height: 60vh;
 }
 
 h1 {
     color: white;
+}
+
+.big-number {
+    font-size: 35px;
 }

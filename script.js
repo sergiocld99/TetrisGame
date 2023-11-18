@@ -1,6 +1,7 @@
 // UI elements
 const canvas = document.getElementById("myCanvas")
 const nextCanvas = document.getElementById("nextCanvas")
+const scoreText = document.getElementById("scoreNumber")
 
 // Prepare board
 const context = canvas.getContext("2d")
@@ -9,7 +10,6 @@ const boardHeight = 20
 const blockSize = 30
 const blockColors = ['black', 'red', 'orange', 'yellow', '#00ff00', 'cyan', 'blue', '#fab3f5', 'gray']
 const colorCount = blockColors.length - 2
-let current_color = getRandomColor(colorCount)
 
 // construimos el tablero de 20 filas por 10 columnas
 let board = Array.from({length: boardHeight}, () => Array(boardWidth).fill(0))
@@ -19,6 +19,10 @@ const nextContext = nextCanvas.getContext("2d")
 const nextBoardWidth = 3
 const nextBoardHeight = 3
 let nextBoard = Array.from({length: nextBoardHeight}, () => Array(nextBoardWidth).fill(0))
+
+// game variables
+let current_color = getRandomColor(colorCount)
+let score = 0
 
 // generamos una pieza de ejemplo
 let piece_x = 0
@@ -60,7 +64,7 @@ function movePiece(){
         board[piece_y][piece_x] = current_color
 
         if (isValidPlace(piece_x, piece_y-1)){
-            checkLine()
+            addScore(checkLine() ? 100 : Math.round(piece_y / 4))
             piece_x = getRandomValue(boardWidth)
             current_color = getNextColor()
             choseNextBlock()
@@ -70,6 +74,11 @@ function movePiece(){
 
         piece_y = -1 
     }
+}
+
+function addScore(diff){
+    score += diff
+    scoreText.innerText = score.toString()
 }
 
 function choseNextBlock(){
@@ -92,11 +101,15 @@ function checkLine(){
     })
 
     // move down everything (x1)
-    if (full) for(y=boardHeight-2; y>-1; y--){
-        for(x=0; x<boardWidth; x++){
-            board[y+1][x] = board[y][x]
+    if (full){
+        for(y=boardHeight-2; y>-1; y--){
+            for(x=0; x<boardWidth; x++){
+                board[y+1][x] = board[y][x]
+            }
         }
     }
+
+    return full
 }
 
 function loseGame(){
@@ -112,10 +125,12 @@ function loseGame(){
 function resetGame(){
     board = board.map(row => row.map(color => 0))
     nextBoard = nextBoard.map(row => row.map(color => 0))
+    score = 0
 
     choseNextBlock()
     drawBoard()
     drawNextBoard()
+    scoreText.innerText = score
 
     piece_x = 0
     piece_y = -1
