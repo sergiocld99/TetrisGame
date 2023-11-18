@@ -1,5 +1,6 @@
 // UI elements
 const canvas = document.getElementById("myCanvas")
+const nextCanvas = document.getElementById("nextCanvas")
 
 // Prepare board
 const context = canvas.getContext("2d")
@@ -13,25 +14,39 @@ let current_color = getRandomColor(colorCount)
 // construimos el tablero de 20 filas por 10 columnas
 let board = Array.from({length: boardHeight}, () => Array(boardWidth).fill(0))
 
+// prepare next block
+const nextContext = nextCanvas.getContext("2d")
+const nextBoardWidth = 3
+const nextBoardHeight = 3
+let nextBoard = Array.from({length: nextBoardHeight}, () => Array(nextBoardWidth).fill(0))
+
 // generamos una pieza de ejemplo
 let piece_x = 0
 let piece_y = 0 
 
 // ---- FUNCIONES ----------------------------------------------
 
-function drawBlock(x, y, color){
-    context.fillStyle = blockColors[color]
-    context.fillRect(x * blockSize, y * blockSize, blockSize, blockSize)
+function drawBlock(x, y, color, ctx){
+    ctx.fillStyle = blockColors[color]
+    ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize)
 
     // borde
-    context.strokeStyle = "#555"
-    context.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize)
+    ctx.strokeStyle = "#555"
+    ctx.strokeRect(x * blockSize, y * blockSize, blockSize, blockSize)
 }
 
 function drawBoard(){
     board.forEach((row, y) => {
         row.forEach((color, x) => {
-            drawBlock(x,y,color)
+            drawBlock(x,y,color,context)
+        })
+    })
+}
+
+function drawNextBoard(){
+    nextBoard.forEach((row, y) => {
+        row.forEach((color, x) => {
+            drawBlock(x,y,color,nextContext)
         })
     })
 }
@@ -47,13 +62,22 @@ function movePiece(){
         if (isValidPlace(piece_x, piece_y-1)){
             checkLine()
             piece_x = getRandomValue(boardWidth)
-            current_color = getRandomColor(colorCount)
+            current_color = getNextColor()
+            choseNextBlock()
         } else {
             loseGame()
         }
 
         piece_y = -1 
     }
+}
+
+function choseNextBlock(){
+    nextBoard[1][1] = getRandomColor(colorCount)
+}
+
+function getNextColor(){
+    return nextBoard[1][1]
 }
 
 function checkLine(){
@@ -68,7 +92,7 @@ function checkLine(){
     })
 
     // move down everything (x1)
-    if (full) for(y=boardHeight-2; y>0; y--){
+    if (full) for(y=boardHeight-2; y>-1; y--){
         for(x=0; x<boardWidth; x++){
             board[y+1][x] = board[y][x]
         }
@@ -86,8 +110,12 @@ function loseGame(){
 }
 
 function resetGame(){
-    board = Array.from({length: boardHeight}, () => Array(boardWidth).fill(0))
+    board = board.map(row => row.map(color => 0))
+    nextBoard = nextBoard.map(row => row.map(color => 0))
+
+    choseNextBlock()
     drawBoard()
+    drawNextBoard()
 
     piece_x = 0
     piece_y = -1
@@ -97,6 +125,7 @@ function gameLoop(){
     movePiece()
     //testBoard()
     drawBoard()
+    drawNextBoard()
 }
 
 // ---- LISTENERS -----------------
