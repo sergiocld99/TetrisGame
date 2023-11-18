@@ -2,12 +2,17 @@
 const canvas = document.getElementById("myCanvas")
 const nextCanvas = document.getElementById("nextCanvas")
 const scoreText = document.getElementById("scoreNumber")
+const linesText = document.getElementById("linesNumber")
+const fullText = document.getElementById("fullNumber")
 
 // Prepare board
 const context = canvas.getContext("2d")
+const blockSize = 30
 const boardWidth = 10
 const boardHeight = 20
-const blockSize = 30
+const boardSize = boardWidth * boardHeight
+
+// Prepare colors
 const blockColors = ['black', 'red', 'orange', 'yellow', '#00ff00', 'cyan', 'blue', '#fab3f5', 'gray']
 const colorCount = blockColors.length - 2
 
@@ -23,6 +28,9 @@ let nextBoard = Array.from({length: nextBoardHeight}, () => Array(nextBoardWidth
 // game variables
 let current_color = getRandomColor(colorCount)
 let score = 0
+let lines = 0
+let goodPieces = 0
+let badPieces = 0
 
 // generamos una pieza de ejemplo
 let piece_x = 0
@@ -64,7 +72,9 @@ function movePiece(){
         board[piece_y][piece_x] = current_color
 
         if (isValidPlace(piece_x, piece_y-1)){
-            addScore(checkLine() ? 100 : Math.round(piece_y / 4))
+            if (checkLine()) addScore(100)
+            else addScore(Math.round(piece_y / 4))  
+            
             piece_x = getRandomValue(boardWidth)
             current_color = getNextColor()
             choseNextBlock()
@@ -79,6 +89,20 @@ function movePiece(){
 function addScore(diff){
     score += diff
     scoreText.innerText = score.toString()
+
+    if (diff == 100) goodPieces += 8
+    else if (diff == 5) goodPieces += 1
+    else {
+        badPieces += Math.pow((5-diff), 2)
+
+        if (badPieces > 100){
+            badPieces /= 4
+            goodPieces /= 4
+        }
+    }
+
+    efficiency = badPieces ? (goodPieces) / (goodPieces + badPieces) : 1
+    fullText.innerText = `${Math.floor(efficiency * 100)}%`
 }
 
 function choseNextBlock(){
@@ -107,9 +131,13 @@ function checkLine(){
                 board[y+1][x] = board[y][x]
             }
         }
+
+        lines++
+        linesText.innerText = lines.toString()
+        return true
     }
 
-    return full
+    return false
 }
 
 function loseGame(){
@@ -126,11 +154,17 @@ function resetGame(){
     board = board.map(row => row.map(color => 0))
     nextBoard = nextBoard.map(row => row.map(color => 0))
     score = 0
+    lines = 0
+    goodPieces = 0
+    badPieces = 0
 
     choseNextBlock()
     drawBoard()
     drawNextBoard()
-    scoreText.innerText = score
+
+    linesText.innerText = "0"
+    scoreText.innerText = "0"
+    fullText.innerText = "100%"
 
     piece_x = 0
     piece_y = -1

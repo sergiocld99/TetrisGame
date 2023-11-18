@@ -17,7 +17,7 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 100px;
+    margin-right: 100px;
     height: 60vh;
 }
 
@@ -25,7 +25,16 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 100px;
+    margin-left: 100px;
+    height: 60vh;
+}
+
+.left-stats-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 100px;
+    min-width: 100px;
     height: 60vh;
 }
 
