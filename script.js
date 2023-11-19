@@ -33,6 +33,14 @@ let goodPieces = 0
 let badPieces = 0
 
 // generamos una pieza de ejemplo
+const candidate_pieces = [
+    [{x: 0, y: 0}],
+    [{x: 0, y: 0}, {x: 0, y: -1}],
+    [{x: 0, y: 0}, {x: 0, y: -1}, {x: 0, y: -2}]
+]
+
+let current_relative_piece = candidate_pieces[getRandomValue(candidate_pieces.length)]
+let next_relative_piece
 let piece_x = 0
 let piece_y = 0 
 
@@ -64,19 +72,26 @@ function drawNextBoard(){
 }
 
 function movePiece(){
-    safeClear(piece_x, piece_y)
+    safeClearPiece(piece_x, piece_y)
 
     if (canMoveTo(piece_x, piece_y+1)){
-        board[++piece_y][piece_x] = current_color
+        safePaintPiece(piece_x, piece_y+1)
+        //board[piece_y+1][piece_x] = current_color
+        piece_y++
     } else {
-        board[piece_y][piece_x] = current_color
+        //board[piece_y][piece_x] = current_color
+        safePaintPiece(piece_x, piece_y)
 
-        if (isValidPlace(piece_x, piece_y-1)){
-            if (checkLine()) addScore(100)
+        if (isValidPlace(piece_x, piece_y-2)){
+            let linesAdded = 0
+
+            while (checkLine()) linesAdded++
+            if (linesAdded) addScore(100*linesAdded)
             else addScore(Math.round(piece_y / 4))  
             
             piece_x = getRandomValue(boardWidth)
             current_color = getNextColor()
+            current_relative_piece = next_relative_piece
             choseNextBlock()
         } else {
             loseGame()
@@ -90,7 +105,7 @@ function addScore(diff){
     score += diff
     scoreText.innerText = score.toString()
 
-    if (diff == 100) goodPieces += 8
+    if (diff >= 100) goodPieces += diff / 10
     else if (diff == 5) goodPieces += 1
     else {
         badPieces += Math.pow((5-diff), 2)
@@ -106,11 +121,23 @@ function addScore(diff){
 }
 
 function choseNextBlock(){
-    nextBoard[1][1] = getRandomColor(colorCount)
+    let color = getRandomColor(colorCount)
+    next_relative_piece = candidate_pieces[getRandomValue(candidate_pieces.length)]
+
+    // clear next board
+    nextBoard.forEach((row, y) => {
+        row.forEach((color, x) => {
+            nextBoard[y][x] = 0
+        })
+    })
+
+    next_relative_piece.forEach(coords => {
+        nextBoard[2+coords.y][1+coords.x] = color
+    })
 }
 
 function getNextColor(){
-    return nextBoard[1][1]
+    return nextBoard[2][1]
 }
 
 function checkLine(){
@@ -186,12 +213,14 @@ document.addEventListener('keydown', e => {
         resetGame()
     } else if (e.key == "ArrowRight"){
         if (canMoveTo(piece_x+1, piece_y)) {
-            board[piece_y][piece_x] = 0
+            //board[piece_y][piece_x] = 0
+            safeClearPiece(piece_x, piece_y)
             piece_x++
         }
     } else if (e.key == "ArrowLeft"){
         if (canMoveTo(piece_x-1, piece_y)) {
-            board[piece_y][piece_x] = 0
+            //board[piece_y][piece_x] = 0
+            safeClearPiece(piece_x, piece_y)
             piece_x--
         }
     }
@@ -203,8 +232,20 @@ function safePaint(x,y){
     if (isValidPlace(x,y)) board[y][x] = current_color
 }
 
+function safePaintPiece(x0, y0){
+    current_relative_piece.forEach(coords => {
+        safePaint(x0 + coords.x, y0 + coords.y)
+    })
+}
+
 function safeClear(x,y){
     if (isValidPlace(x,y)) board[y][x] = 0
+}
+
+function safeClearPiece(x0, y0){
+    current_relative_piece.forEach(coords => {
+        safeClear(x0 + coords.x, y0 + coords.y)
+    })
 }
 
 function canMoveTo(x,y){
