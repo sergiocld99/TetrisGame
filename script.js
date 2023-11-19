@@ -82,7 +82,7 @@ function movePiece(){
         //board[piece_y][piece_x] = current_color
         safePaintPiece(piece_x, piece_y)
 
-        if (isValidPlace(piece_x, piece_y-2)){
+        if (isBoardValid()){
             let linesAdded = 0
 
             while (checkLine()) linesAdded++
@@ -93,6 +93,7 @@ function movePiece(){
             current_color = getNextColor()
             current_relative_piece = next_relative_piece
             choseNextBlock()
+            drawNextBoard()
         } else {
             loseGame()
         }
@@ -201,7 +202,7 @@ function gameLoop(){
     movePiece()
     //testBoard()
     drawBoard()
-    drawNextBoard()
+    //drawNextBoard()
 }
 
 // ---- LISTENERS -----------------
@@ -228,7 +229,7 @@ document.addEventListener('keydown', e => {
 
 // ---- UTILS ---------------------
 
-function safePaint(x,y){
+function safePaint(x,y) {
     if (isValidPlace(x,y)) board[y][x] = current_color
 }
 
@@ -255,6 +256,19 @@ function canMoveTo(x,y){
 
 function isValidPlace(x,y){
     return (y >= 0 && y < boardHeight && x >= 0 && x < boardWidth)
+}
+
+function isBoardValid(){
+    let result = true
+
+    board[0].forEach(color => {
+        if (color){
+            result = false
+            return
+        }
+    })
+
+    return result
 }
 
 function getRandomValue(max){
