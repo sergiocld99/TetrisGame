@@ -155,7 +155,7 @@ function movePiece(){
                 rotation_state: 0
             }
 
-            piece_x = 5
+            piece_x = boardWidth / 2
             current_color = getNextColor()
             
             choseNextBlock()
@@ -266,7 +266,7 @@ function resetGame(){
     scoreText.innerText = "0"
     fullText.innerText = "100%"
 
-    piece_x = 0
+    piece_x = boardWidth / 2
     piece_y = -1
 }
 
@@ -343,7 +343,7 @@ function canMovePieceTo(x0,y0){
 
         if (y < 0){
             // arriba del tablero
-            if (x <= 0 || x >= boardWidth){
+            if (x < 0 || x >= boardWidth){
                 ok = false
                 return
             }
