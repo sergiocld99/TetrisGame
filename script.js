@@ -21,28 +21,84 @@ let board = Array.from({length: boardHeight}, () => Array(boardWidth).fill(0))
 
 // prepare next block
 const nextContext = nextCanvas.getContext("2d")
-const nextBoardWidth = 3
+const nextBoardWidth = 4
 const nextBoardHeight = 3
 let nextBoard = Array.from({length: nextBoardHeight}, () => Array(nextBoardWidth).fill(0))
 
 // game variables
-let current_color = getRandomColor(colorCount)
 let score = 0
 let lines = 0
 let goodPieces = 0
 let badPieces = 0
 
-// generamos una pieza de ejemplo
-const candidate_pieces = [
-    [{x: 0, y: 0}],
-    [{x: 0, y: 0}, {x: 0, y: -1}],
-    [{x: 0, y: 0}, {x: 0, y: -1}, {x: 0, y: -2}]
-]
+// bloques disponibles
+const block_red = {
+    rotations: [
+        [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}],
+        [{x: 0, y: 0}, {x: 0, y: -1}, {x: 0, y: -2}, {x: 0, y: -3}]
+    ]
+}
 
-let current_relative_piece = candidate_pieces[getRandomValue(candidate_pieces.length)]
-let next_relative_piece
+const block_orange = {
+    rotations: [
+        [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 2, y: -1}],
+        [{x: 0, y: -2}, {x: 1, y: -2}, {x: 1, y: -1}, {x: 1, y: 0}],
+        [{x: 0, y: 0}, {x: 0, y: -1}, {x: 1, y: -1}, {x: 2, y: -1}],
+        [{x: 0, y: -2}, {x: 0, y: -1}, {x: 0, y: 0}, {x: 1, y: 0}]
+    ]
+}
+
+const block_yellow = {
+    rotations: [
+        [{x: 0, y: 0}, {x: 0, y: -1}, {x: 1, y: 0}, {x: 1, y: -1}]
+    ]
+}
+
+const block_green = {
+    rotations: [
+        [{x: 0, y: -1}, {x: 1, y: -1}, {x: 1, y: 0}, {x: 2, y: 0}],
+        [{x: 0, y: 0}, {x: 0, y: -1}, {x: 1, y: -1}, {x: 1, y: -2}]
+    ]
+}
+
+const block_cyan = {
+    rotations: [
+        [{x: 0, y: -1}, {x: 1, y: -1}, {x: 2, y: -1}, {x: 1, y: 0}],
+        [{x: 0, y: 0}, {x: 0, y: -1}, {x: 0, y: -2}, {x: 1, y: -1}],
+        [{x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 1, y: -1}],
+        [{x: 1, y: 0}, {x: 1, y: -1}, {x: 1, y: -2}, {x: 0, y: -1}]
+    ]
+}
+
+const block_blue = {
+    rotations: [
+        [{x: 0, y: 0}, {x: 0, y: -1}, {x: 1, y: 0}, {x: 2, y: 0}],
+        [{x: 1, y: -2}, {x: 0, y: -2}, {x: 0, y: -1}, {x: 0, y: 0}],
+        [{x: 2, y: 0}, {x: 2, y: -1}, {x: 1, y: -1}, {x: 0, y: -1}],
+        [{x: 1, y: -2}, {x: 1, y: -1}, {x: 1, y: 0}, {x: 0, y: 0}]
+    ]
+}
+
+const block_purple = {
+    rotations: [
+        [{x: 2, y: -1}, {x: 1, y: -1}, {x: 1, y: 0}, {x: 0, y: 0}],
+        [{x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: -1}, {x: 0, y: -2}]
+    ]
+}
+
+const candidate_pieces = [block_red, block_orange, block_yellow, block_green, block_cyan, block_blue, block_purple]
+
+let current_color = getRandomValue(candidate_pieces.length) + 1
+let next_piece = candidate_pieces[current_color-1]
+
+let current_piece = {
+    rotations: next_piece.rotations,
+    rotation_state: 0
+}
+
 let piece_x = 0
 let piece_y = 0 
+let ticks = 0
 
 // ---- FUNCIONES ----------------------------------------------
 
@@ -71,27 +127,37 @@ function drawNextBoard(){
     })
 }
 
+function drawCurrentBlock(){
+    getCurrentPieceCoords().forEach(coords => {
+        drawBlock(piece_x + coords.x, piece_y + coords.y,current_color, context)
+    })
+}
+
 function movePiece(){
     safeClearPiece(piece_x, piece_y)
 
-    if (canMoveTo(piece_x, piece_y+1)){
-        safePaintPiece(piece_x, piece_y+1)
-        //board[piece_y+1][piece_x] = current_color
+    if (canMovePieceTo(piece_x, piece_y+1)){
+        //safePaintPiece(piece_x, piece_y+1)
         piece_y++
     } else {
-        //board[piece_y][piece_x] = current_color
-        safePaintPiece(piece_x, piece_y)
+        safePaintPiece(piece_x, piece_y)        // lock block
 
         if (isBoardValid()){
             let linesAdded = 0
+            const heightToCheck = getPieceHeight(getCurrentPieceCoords())
 
-            while (checkLine()) linesAdded++
+            while (checkLine(piece_y, heightToCheck)) linesAdded++
             if (linesAdded) addScore(100*linesAdded)
             else addScore(Math.round(piece_y / 4))  
             
-            piece_x = getRandomValue(boardWidth)
+            current_piece = {
+                rotations: next_piece.rotations,
+                rotation_state: 0
+            }
+
+            piece_x = 5
             current_color = getNextColor()
-            current_relative_piece = next_relative_piece
+            
             choseNextBlock()
             drawNextBoard()
         } else {
@@ -122,8 +188,8 @@ function addScore(diff){
 }
 
 function choseNextBlock(){
-    let color = getRandomColor(colorCount)
-    next_relative_piece = candidate_pieces[getRandomValue(candidate_pieces.length)]
+    let color = getRandomValue(candidate_pieces.length) + 1
+    next_piece = candidate_pieces[color-1]
 
     // clear next board
     nextBoard.forEach((row, y) => {
@@ -132,29 +198,35 @@ function choseNextBlock(){
         })
     })
 
-    next_relative_piece.forEach(coords => {
-        nextBoard[2+coords.y][1+coords.x] = color
+    next_piece.rotations[0].forEach(coords => {
+        nextBoard[2+coords.y][0+coords.x] = color
     })
 }
 
 function getNextColor(){
-    return nextBoard[2][1]
+    return nextBoard[2+next_piece.rotations[0][0].y][0+next_piece.rotations[0][0].x]
 }
 
-function checkLine(){
-    let full = true
+function checkLine(sinceRow, iterations){
+    let y_check = -1
 
     // check if exists a blank space (black color)
-    board[boardHeight-1].forEach(color => {
-        if (color === 0){
-            full = false
-            return
-        }
-    })
+    for(i=0; i<iterations; i++){
+        let full = true
+
+        board[sinceRow-i].forEach(color => {
+            if (color === 0){
+                full = false
+                return
+            }
+        })
+
+        if (full) y_check = sinceRow - i
+    }
 
     // move down everything (x1)
-    if (full){
-        for(y=boardHeight-2; y>-1; y--){
+    if (y_check > -1){
+        for(y=y_check-1; y>-1; y--){
             for(x=0; x<boardWidth; x++){
                 board[y+1][x] = board[y][x]
             }
@@ -199,9 +271,14 @@ function resetGame(){
 }
 
 function gameLoop(){
-    movePiece()
+    if (++ticks == 25){
+        movePiece()
+        ticks = 0
+    }
+    //movePiece()
     //testBoard()
     drawBoard()
+    drawCurrentBlock()
     //drawNextBoard()
 }
 
@@ -213,16 +290,20 @@ document.addEventListener('keydown', e => {
     if (e.key == "Enter"){
         resetGame()
     } else if (e.key == "ArrowRight"){
-        if (canMoveTo(piece_x+1, piece_y)) {
-            //board[piece_y][piece_x] = 0
-            safeClearPiece(piece_x, piece_y)
+        if (canMovePieceTo(piece_x+1, piece_y)) {
             piece_x++
         }
     } else if (e.key == "ArrowLeft"){
-        if (canMoveTo(piece_x-1, piece_y)) {
-            //board[piece_y][piece_x] = 0
-            safeClearPiece(piece_x, piece_y)
+        if (canMovePieceTo(piece_x-1, piece_y)) {
             piece_x--
+        }
+    } else if (e.key == "ArrowDown"){
+        if (canMovePieceTo(piece_x, piece_y+1)) {
+            piece_y++
+        }
+    } else if (e.key == " "){
+        if (canPieceRotate()){
+            current_piece.rotation_state = (current_piece.rotation_state + 1) % current_piece.rotations.length
         }
     }
 })
@@ -234,7 +315,7 @@ function safePaint(x,y) {
 }
 
 function safePaintPiece(x0, y0){
-    current_relative_piece.forEach(coords => {
+    getCurrentPieceCoords().forEach(coords => {
         safePaint(x0 + coords.x, y0 + coords.y)
     })
 }
@@ -244,18 +325,71 @@ function safeClear(x,y){
 }
 
 function safeClearPiece(x0, y0){
-    current_relative_piece.forEach(coords => {
+    getCurrentPieceCoords().forEach(coords => {
         safeClear(x0 + coords.x, y0 + coords.y)
     })
 }
 
 function canMoveTo(x,y){
-    if (isValidPlace(x,y)) return board[y][x] == 0
-    return false
+    return isValidPlace(x,y) && board[y][x] == 0
+}
+
+function canMovePieceTo(x0,y0){
+    let ok = true
+
+    getCurrentPieceCoords().forEach(coords => {
+        const x = x0 + coords.x
+        const y = y0 + coords.y
+
+        if (y < 0){
+            // arriba del tablero
+            if (x <= 0 || x >= boardWidth){
+                ok = false
+                return
+            }
+        } else {
+            // dentro del tablero
+            if (!canMoveTo(x,y)){
+                ok = false
+                return
+            }
+        }
+    })
+
+    return ok
+}
+
+function canPieceRotate(){
+    let test_rotation_state = (current_piece.rotation_state + 1) % current_piece.rotations.length
+    return isPieceInside(piece_x, piece_y, current_piece.rotations[test_rotation_state])
 }
 
 function isValidPlace(x,y){
     return (y >= 0 && y < boardHeight && x >= 0 && x < boardWidth)
+}
+
+function isCellOutside(x,y){
+    return (y >= boardHeight || x < 0 || x >= boardWidth)
+}
+
+function isCellOccupied(x,y){
+    return board[y][x] != 0
+}
+
+function isPieceInside(x0, y0, relative_coords){
+    let inside = true
+
+    relative_coords.forEach(coords => {
+        const x = x0 + coords.x
+        const y = y0 + coords.y
+
+        if (y >= 0 && (isCellOutside(x,y) || isCellOccupied(x,y))){
+            inside = false
+            return
+        }
+    })
+
+    return inside
 }
 
 function isBoardValid(){
@@ -269,6 +403,30 @@ function isBoardValid(){
     })
 
     return result
+}
+
+function getCurrentPieceCoords(){
+    return current_piece.rotations[current_piece.rotation_state]
+}
+
+function getPieceWidth(relative_coords){
+    let max_x = 0
+    
+    relative_coords.forEach(coords => {
+        if (coords.x > max_x) max_x = coords.x 
+    })
+
+    return (max_x + 1)
+}
+
+function getPieceHeight(relative_coords){
+    let min_y = 0
+    
+    relative_coords.forEach(coords => {
+        if (coords.y < min_y) min_y = coords.y
+    })
+
+    return (1 - min_y)
 }
 
 function getRandomValue(max){
@@ -290,4 +448,4 @@ function testBoard(){
 // ---- MAIN PROGRAM --------------
 
 resetGame()
-setInterval(gameLoop, 60)
+setInterval(gameLoop, 20)
