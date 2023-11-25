@@ -96,9 +96,11 @@ let current_piece = {
     rotation_state: 0
 }
 
+const tick_level0_cycle = 30
 let piece_x = 0
 let piece_y = 0 
 let ticks = 0
+let tick_cycle = tick_level0_cycle
 
 // ---- FUNCIONES ----------------------------------------------
 
@@ -234,6 +236,14 @@ function checkLine(sinceRow, iterations){
 
         lines++
         linesText.innerText = lines.toString()
+
+        // update gravity
+        if (lines < 100){
+            tick_cycle = tick_level0_cycle - Math.floor(lines / 5)
+        } else {
+            tick_cycle = Math.max(1, tick_level0_cycle - 20 - Math.floor((lines-100) / 10)) 
+        }
+        
         return true
     }
 
@@ -257,6 +267,7 @@ function resetGame(){
     lines = 0
     goodPieces = 0
     badPieces = 0
+    tick_cycle = tick_level0_cycle
 
     choseNextBlock()
     drawBoard()
@@ -271,15 +282,13 @@ function resetGame(){
 }
 
 function gameLoop(){
-    if (++ticks == 25){
+    if (++ticks == tick_cycle){
         movePiece()
         ticks = 0
     }
-    //movePiece()
-    //testBoard()
+
     drawBoard()
     drawCurrentBlock()
-    //drawNextBoard()
 }
 
 // ---- LISTENERS -----------------
